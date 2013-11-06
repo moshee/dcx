@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"math/big"
+	"math"
+	//"math/big"
 	"unicode/utf8"
 )
 
@@ -16,21 +17,14 @@ type String []byte
 func (s String) String() string { return string(s) }
 func (s String) Len() int       { return utf8.RuneCount([]byte(s)) }
 
-var (
-	zero = big.NewInt(0)
-	one  = big.NewInt(1)
-)
-
-type Number struct {
-	*big.Rat
-}
+type Number float64
 
 func intNumber(i int64) Number {
-	return Number{big.NewRat(i, 1)}
+	return Number(i)
 }
 
 func (n Number) String() string {
-	return n.Rat.FloatString(precision)
+	return fmt.Sprintf("%g", n)
 }
 
 func (n Number) Len() int {
@@ -39,25 +33,23 @@ func (n Number) Len() int {
 
 // Rounds the big.Rat to an integer and returns it
 func (n Number) Int() int64 {
-	num := n.Num()
-
-	if n.IsInt() {
-		return num.Int64()
-	}
-
-	denom := n.Denom()
-
-	return num.Div(num, denom).Int64()
+	return int64(n)
 }
 
 func (n Number) Cmp(m Number) int {
-	return n.Rat.Cmp(m.Rat)
+	if n < m {
+		return -1
+	} else if n > m {
+		return 1
+	}
+	return 0
 }
 
 // Logic stolen from math/big/rat.go. Probably much slower than it could've
 // been if some of those unexported big.Rat methods and stuff were exported. We
 // have to sidestep using big.nats by using big.Ints.
 
+/*
 func mulDenom(z, x, y *big.Int) *big.Int {
 	switch {
 	case x.Cmp(zero) == 0:
@@ -76,24 +68,9 @@ func scaleDenom(num, denom *big.Int) *big.Int {
 	z.Set(z.Mul(num, denom))
 	return &z
 }
+*/
 
 // Compute and set n to the remainder of a and b.
 func (n Number) Mod(a, b Number) Number {
-	if a.IsInt() && b.IsInt() {
-		aNum, bNum := a.Num(), b.Num()
-		n.Rat.SetInt(aNum.Mod(aNum, bNum))
-	} else {
-		if b.Num().Cmp(zero) == 0 {
-			panic("remainder by zero")
-		}
-		a1 := scaleDenom(a.Num(), b.Denom())
-		b1 := scaleDenom(b.Num(), a.Denom())
-
-		num := new(big.Int).Mod(a1, b1)
-		denom := mulDenom(n.Denom(), a.Denom(), b.Denom())
-
-		n.Rat = a.SetFrac(num, denom)
-	}
-
-	return n
+	return Number(math.Mod(float64(a), float64(b)))
 }

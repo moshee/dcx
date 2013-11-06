@@ -6,10 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"math/big"
+	//"math/big"
 	"os"
 	"path/filepath"
 	//"runtime/debug"
+	"strconv"
 	"unicode"
 	//"unicode/utf8"
 )
@@ -296,11 +297,11 @@ scan:
 	}
 
 	str := string(buf)
-
-	if rat, ok := new(big.Rat).SetString(str); ok {
-		stack.Push(Number{rat})
+	f, err := strconv.ParseFloat(str, 64)
+	if err != nil {
+		self.errorf("failed to parse numeric '%s'", str)
 	} else {
-		self.error(fmt.Errorf("error parsing numeric '%s'", str))
+		stack.Push(Number(f))
 	}
 }
 

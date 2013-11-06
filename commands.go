@@ -42,16 +42,7 @@ func init() {
 
 		// Duplicate value on top of stack
 		'd': func(p *program) {
-			d := stack.Peek()
-			switch top := d.(type) {
-			case Number:
-				rat := *top.Rat
-				stack.Push(Number{&rat})
-			case String:
-				str := make(String, len(top))
-				copy(str, top)
-				stack.Push(str)
-			}
+			stack.Push(stack.Peek())
 		},
 
 		// Reverse top two values on the stack
@@ -80,12 +71,10 @@ func init() {
 		'k': func(p *program) {
 			num := stack.PopNumber()
 
-			if !num.IsInt() {
-				p.error("can't set precision to a non-integer")
-			} else if num.Sign() < 0 {
+			if num < 0 {
 				p.error("cannot set a negative precision")
 			} else {
-				precision = int(num.Int())
+				precision = int(num)
 			}
 		},
 
@@ -189,8 +178,7 @@ func init() {
 				rhs := stack.PopNumber()
 				lhs := stack.PopNumber()
 
-				lhs.Rat.Add(lhs.Rat, rhs.Rat)
-				stack.Push(lhs)
+				stack.Push(lhs + rhs)
 			}
 		},
 
@@ -203,8 +191,7 @@ func init() {
 				rhs := stack.PopNumber()
 				lhs := stack.PopNumber()
 
-				lhs.Rat.Sub(lhs.Rat, rhs.Rat)
-				stack.Push(lhs)
+				stack.Push(lhs - rhs)
 			}
 		},
 
@@ -216,8 +203,7 @@ func init() {
 				rhs := stack.PopNumber()
 				lhs := stack.PopNumber()
 
-				lhs.Rat.Mul(lhs.Rat, rhs.Rat)
-				stack.Push(lhs)
+				stack.Push(lhs * rhs)
 			}
 		},
 
@@ -230,8 +216,7 @@ func init() {
 				rhs := stack.PopNumber()
 				lhs := stack.PopNumber()
 
-				lhs.Rat.Quo(lhs.Rat, rhs.Rat)
-				stack.Push(lhs)
+				stack.Push(lhs / rhs)
 			}
 		},
 
