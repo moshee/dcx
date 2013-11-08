@@ -5,12 +5,16 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"os/exec"
 	"unicode/utf8"
 )
 
-var commands map[rune]func(*program)
+var (
+	commands map[rune]func(*program)
+	Pbuf     = make([]byte, 4)
+)
 
 func init() {
 	commands = map[rune]func(*program){
@@ -23,7 +27,7 @@ func init() {
 		},
 
 		'Q': func(p *program) {
-			delta := int(stack.PopNumber().Int())
+			delta := int(stack.PopNumber())
 
 			// Q will never exit the program
 			if delta > macroDepth {
@@ -163,8 +167,20 @@ func init() {
 			case String:
 				fmt.Print(v)
 			case Number:
-				n := v.Int()
-				binary.Write(os.Stdout, binary.LittleEndian, n)
+				n := uint32(v)
+				sz := 0
+				switch {
+				case n > 1<<24-1:
+					sz = 4
+				case n > 1<<16-1:
+					sz = 3
+				case n > 1<<8-1:
+					sz = 2
+				default:
+					sz = 1
+				}
+				binary.LittleEndian.PutUint32(Pbuf, n)
+				os.Stdout.Write(Pbuf[:sz])
 			}
 		},
 
@@ -240,7 +256,9 @@ func init() {
 		},
 
 		'^': func(p *program) {
-			panic("pow")
+			pow := stack.PopNumber()
+			base := stack.PopNumber()
+			stack.Push(Number(math.Pow(float64(base), float64(pow))))
 		},
 
 		'|': func(p *program) {
@@ -248,7 +266,8 @@ func init() {
 		},
 
 		'v': func(p *program) {
-			panic("sqrt")
+			num := stack.PopNumber()
+			stack.Push(Number(math.Sqrt(float64(num))))
 		},
 
 		// Strings and macros
@@ -261,7 +280,7 @@ func init() {
 			case String:
 				ch, _ = utf8.DecodeRuneInString(string(v))
 			case Number:
-				ch = rune(v.Int())
+				ch = rune(v)
 			}
 
 			stack.Push(String(string(ch)))
@@ -327,6 +346,17 @@ func init() {
 		'Z': func(p *program) {
 			stack.Push(intNumber(int64(stack.Pop().Len())))
 		},
+
+		'X': func(p *program) {
+			switch v := stack.Pop().(type) {
+			case String:
+				stack.Push(Number(0))
+			case Number:
+				stack.Push(v)
+				panic("figure out the fractional digits")
+			}
+		},
+
 		'#': func(p *program) {
 			p.finishLine()
 		},
@@ -380,6 +410,38 @@ func init() {
 				if err := cmd.Run(); err != nil {
 					p.error(err)
 				}
+			}
+		},
+
+		':': func(p *program) {
+			ch := p.next()
+			if ch == eof {
+				return
+			}
+
+			reg, ok := registers[ch]
+			if !ok {
+				reg = newStack()
+				registers[ch] = reg
+			}
+
+			index := stack.PopNumber()
+			value := stack.Pop()
+			reg.ArraySet(index, value)
+		},
+
+		';': func(p *program) {
+			ch := p.next()
+			if ch == eof {
+				return
+			}
+
+			reg, ok := registers[ch]
+			if ok {
+				index := stack.PopNumber()
+				stack.Push(reg.ArrayGet(index))
+			} else {
+				stack.Push(Number(0))
 			}
 		},
 	}

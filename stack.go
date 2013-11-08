@@ -12,11 +12,12 @@ var (
 )
 
 type Stack struct {
-	Data []Datum
+	Data  []Datum
+	Array []Datum
 }
 
 func newStack() *Stack {
-	return &Stack{make([]Datum, 0)}
+	return &Stack{make([]Datum, 0), nil}
 }
 
 func (s *Stack) Push(d Datum) {
@@ -62,6 +63,35 @@ func (s *Stack) Peek() (d Datum) {
 	}
 
 	return s.Data[len(s.Data)-1]
+}
+
+func (s *Stack) ArrayGet(index Number) Datum {
+	if s.Array == nil {
+		return Number(0)
+	}
+	i := int(index)
+	if i >= len(s.Array) {
+		return Number(0)
+	} else if i < 0 {
+		panic("cannot index array by negative number")
+	}
+	return s.Array[i]
+}
+
+func (s *Stack) ArraySet(index Number, value Datum) {
+	i := int(index)
+	if s.Array == nil {
+		s.Array = make([]Datum, i+1)
+	}
+	if i < len(s.Array) {
+		s.Array[i] = value
+		return
+	}
+
+	for n := 0; n < i-len(s.Array); n++ {
+		s.Array = append(s.Array, Number(0))
+	}
+	s.Array = append(s.Array, value)
 }
 
 func (s *Stack) Len() int {
