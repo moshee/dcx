@@ -26,7 +26,7 @@ sys     0m2.352s
 #### TODO
 
 - reimplement number (`math/big` is kind of worthless for this)
-  - i, o, I, O
+  - `i`, `o`, `I`, `O`
   - `~`, `|` (not in `math`)
 - Z
 - X
