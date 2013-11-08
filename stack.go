@@ -75,7 +75,11 @@ func (s *Stack) ArrayGet(index Number) Datum {
 	} else if i < 0 {
 		panic("cannot index array by negative number")
 	}
-	return s.Array[i]
+	d := s.Array[i]
+	if d == nil {
+		return Number(0)
+	}
+	return d
 }
 
 func (s *Stack) ArraySet(index Number, value Datum) {

@@ -28,7 +28,7 @@ sys     0m2.352s
 - reimplement number (`math/big` is kind of worthless for this)
   - `i`, `o`, `I`, `O`
   - `~`, `|` (not in `math`)
-- Z
-- X
+- `Z`
+- `X`
 - when I'm feeling adventurous this is a nice project to study optimization
 - special functions (sin, cos, etc.)?
